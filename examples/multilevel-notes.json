@@ -1,0 +1,169 @@
+{
+  "schema_version": "0.3",
+  "id": "table-1",
+  "title": {
+    "text": "Table 1. Reported figures",
+    "markers": [
+      {
+        "at": 25,
+        "text": "†",
+        "note_ref": "n-title"
+      }
+    ]
+  },
+  "headers": [
+    {
+      "id": "h-product",
+      "text": "Product"
+    },
+    {
+      "id": "h-revenue",
+      "text": "Revenue",
+      "markers": [
+        {
+          "at": 7,
+          "text": "*",
+          "note_ref": "n-header"
+        }
+      ]
+    },
+    {
+      "id": "h-2024",
+      "text": "2024"
+    },
+    {
+      "id": "h-2025",
+      "text": "2025"
+    },
+    {
+      "id": "h-actual-2024",
+      "text": "Actual"
+    },
+    {
+      "id": "h-budget-2024",
+      "text": "Budget"
+    },
+    {
+      "id": "h-actual-2025",
+      "text": "Actual"
+    },
+    {
+      "id": "h-budget-2025",
+      "text": "Budget"
+    }
+  ],
+  "columns": [
+    {
+      "id": "c0",
+      "headers": [
+        "h-product"
+      ]
+    },
+    {
+      "id": "c1",
+      "headers": [
+        "h-revenue",
+        "h-2024",
+        "h-actual-2024"
+      ]
+    },
+    {
+      "id": "c2",
+      "headers": [
+        "h-revenue",
+        "h-2024",
+        "h-budget-2024"
+      ]
+    },
+    {
+      "id": "c3",
+      "headers": [
+        "h-revenue",
+        "h-2025",
+        "h-actual-2025"
+      ]
+    },
+    {
+      "id": "c4",
+      "headers": [
+        "h-revenue",
+        "h-2025",
+        "h-budget-2025"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "id": "r0",
+      "cells": [
+        {
+          "id": "a",
+          "columns": [
+            "c0"
+          ],
+          "text": "A",
+          "level": 0
+        },
+        {
+          "id": "b",
+          "columns": [
+            "c1"
+          ],
+          "text": "10"
+        },
+        {
+          "id": "c",
+          "columns": [
+            "c2"
+          ],
+          "text": "12"
+        },
+        {
+          "id": "d",
+          "columns": [
+            "c3"
+          ],
+          "text": "14",
+          "markers": [
+            {
+              "at": 2,
+              "text": "a",
+              "note_ref": "n-cell"
+            }
+          ]
+        },
+        {
+          "id": "e",
+          "columns": [
+            "c4"
+          ],
+          "text": "15"
+        }
+      ]
+    }
+  ],
+  "notes": [
+    {
+      "id": "n-title",
+      "label": "†",
+      "text": "Revised edition."
+    },
+    {
+      "id": "n-header",
+      "label": "*",
+      "text": "Amounts as reported in the source."
+    },
+    {
+      "id": "n-cell",
+      "label": "a",
+      "text": "Provisional figure."
+    },
+    {
+      "id": "n-general",
+      "text": "Figures may not add up due to rounding."
+    }
+  ],
+  "note_refs": [
+    "n-general"
+  ]
+}

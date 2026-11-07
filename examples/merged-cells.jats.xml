@@ -1,0 +1,34 @@
+<table-wrap id="table-2">
+  <label>Table 2.</label>
+  <caption>
+    <title>Figures by country and sector</title>
+  </caption>
+  <table>
+    <thead>
+      <tr>
+        <th id="h-country">Country</th>
+        <th id="h-sector">Sector</th>
+        <th id="h-2024">2024</th>
+        <th id="h-2025">2025</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td id="a" headers="h-country" rowspan="2">Germany</td>
+        <td id="b" headers="h-sector">Manufacturing</td>
+        <td id="c" headers="h-2024">10</td>
+        <td id="d" headers="h-2025">12</td>
+      </tr>
+      <tr>
+        <td id="e" headers="h-sector">Services</td>
+        <td id="f" headers="h-2024 h-2025" colspan="2">Not disclosed<xref ref-type="table-fn" rid="n1">*</xref></td>
+      </tr>
+    </tbody>
+  </table>
+  <table-wrap-foot>
+    <fn id="n1">
+      <label>*</label>
+      <p>Disclosure withheld for this entry.</p>
+    </fn>
+  </table-wrap-foot>
+</table-wrap>

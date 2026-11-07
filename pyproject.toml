@@ -1,0 +1,49 @@
+# Workspace root. It is not a package itself; members live under packages/ (and later apps/).
+[project]
+name = "tablereader"
+version = "0.0.0"
+description = "Extract tables from scanned PDFs into structured JSON"
+license = "Apache-2.0"
+authors = [{ name = "Lothar Schiemanowski" }]
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "table-core",
+    "jsonschema>=4.26.0",
+    "pyright>=1.1.414",
+    "pytest>=9.2.0",
+    "ruff>=0.17.4",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+table-core = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = ["packages"]
+addopts = ["--import-mode=importlib"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["table_core"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+venvPath = "."
+venv = ".venv"
+include = ["packages"]
+typeCheckingMode = "standard"
+strict = ["packages/table_core/src"]

@@ -1,0 +1,13 @@
+[project]
+name = "table-core"
+version = "0.1.0"
+description = "Parse the fixed OCR transcription, propose table JSON, validate and encode it"
+license = "Apache-2.0"
+authors = [{ name = "Lothar Schiemanowski" }]
+requires-python = ">=3.12,<3.13"
+# No GPU, network or PDF dependencies: the core receives strings and typed records only.
+dependencies = []
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"

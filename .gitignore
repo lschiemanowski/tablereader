@@ -218,3 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Planning documents (architecture, build plan) are kept out of version control
+planning/
