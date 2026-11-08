@@ -10,7 +10,9 @@ Turns tables in scanned PDFs into structured JSON: a layout detector proposes re
 - `packages/table_core/`: parsing, JSON proposal, validation and codecs. Pure Python; no GPU, network, PDF or web dependencies.
 - `packages/document_prep/`: page rendering (pypdfium2, pinned), crop extension over titles and footnotes, Heron layout detection (optional `layout` extra). Crop pixels depend on these versions and on `PreparationSettings`; change them deliberately.
 - `scripts/`: one-off runs against table_benchmark (read-only there); outputs go to the gitignored `data/`. Run them from this repository, never from inside table_benchmark.
-- Later members (`extraction`, `training`, `evaluation`, `apps/serving`) are added when their build step starts, not before.
+- `packages/extraction/`: the `TableRecognizer` protocol, result types, bounded concurrent extraction over prepared regions, and `CodexRecognizer` (GPT-6.1 Terra via headless `codex exec`, used for labeling). Its prompt copies sections of `docs/transcription-format.md` verbatim; a test enforces it, so edit both together.
+- `packages/evaluation/`: the record metric (`records-1`; bump the version with any change to normalization or records) and cell-grid comparison with table_benchmark references.
+- Later members (`training`, `apps/serving`) are added when their build step starts, not before.
 
 ## Commands
 

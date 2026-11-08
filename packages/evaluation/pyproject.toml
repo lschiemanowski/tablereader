@@ -1,0 +1,15 @@
+[project]
+name = "evaluation"
+version = "0.1.0"
+description = "Score table JSON against references: the record metric, and grid comparison with cell-grid references"
+license = "Apache-2.0"
+authors = [{ name = "Lothar Schiemanowski" }]
+requires-python = ">=3.12,<3.13"
+dependencies = ["table-core"]
+
+[tool.uv.sources]
+table-core = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"

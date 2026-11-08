@@ -5,6 +5,8 @@ requires-python = "==3.12.*"
 [manifest]
 members = [
     "document-prep",
+    "evaluation",
+    "extraction",
     "table-core",
     "tablereader",
 ]
@@ -149,6 +151,32 @@ requires-dist = [
     { name = "transformers", marker = "extra == 'layout'", specifier = "==5.22.1" },
 ]
 provides-extras = ["layout"]
+
+[[package]]
+name = "evaluation"
+version = "0.1.0"
+source = { editable = "packages/evaluation" }
+dependencies = [
+    { name = "table-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "table-core", editable = "packages/table_core" }]
+
+[[package]]
+name = "extraction"
+version = "0.1.0"
+source = { editable = "packages/extraction" }
+dependencies = [
+    { name = "document-prep" },
+    { name = "table-core" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "document-prep", editable = "packages/document_prep" },
+    { name = "table-core", editable = "packages/table_core" },
+]
 
 [[package]]
 name = "filelock"
@@ -903,6 +931,8 @@ source = { virtual = "." }
 [package.dev-dependencies]
 dev = [
     { name = "document-prep" },
+    { name = "evaluation" },
+    { name = "extraction" },
     { name = "lxml-stubs" },
     { name = "pyright" },
     { name = "pytest" },
@@ -919,6 +949,8 @@ layout = [
 [package.metadata.requires-dev]
 dev = [
     { name = "document-prep", editable = "packages/document_prep" },
+    { name = "evaluation", editable = "packages/evaluation" },
+    { name = "extraction", editable = "packages/extraction" },
     { name = "lxml-stubs", specifier = ">=0.5.1" },
     { name = "pyright", specifier = ">=1.1.414" },
     { name = "pytest", specifier = ">=9.2.0" },

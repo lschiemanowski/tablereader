@@ -12,6 +12,8 @@ dependencies = []
 dev = [
     "table-core",
     "document-prep",
+    "extraction",
+    "evaluation",
     "pyright>=1.1.414",
     "pytest>=9.2.0",
     "ruff>=0.17.4",
@@ -30,6 +32,8 @@ members = ["packages/*"]
 [tool.uv.sources]
 table-core = { workspace = true }
 document-prep = { workspace = true }
+extraction = { workspace = true }
+evaluation = { workspace = true }
 
 [tool.pytest.ini_options]
 testpaths = ["packages"]
@@ -43,7 +47,7 @@ target-version = "py312"
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["table_core", "document_prep"]
+known-first-party = ["table_core", "document_prep", "extraction", "evaluation"]
 
 [tool.pyright]
 pythonVersion = "3.12"
@@ -51,4 +55,4 @@ venvPath = "."
 venv = ".venv"
 include = ["packages"]
 typeCheckingMode = "standard"
-strict = ["packages/table_core/src", "packages/document_prep/src"]
+strict = ["packages/table_core/src", "packages/document_prep/src", "packages/extraction/src", "packages/evaluation/src"]
