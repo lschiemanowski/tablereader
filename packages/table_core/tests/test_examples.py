@@ -1,15 +1,17 @@
-"""The JSON Schema is itself valid, and every example table conforms to it."""
+"""The JSON Schema shipped with table_core is itself valid, and every example table conforms to it."""
 
 import json
+from importlib.resources import files
 from pathlib import Path
 
 import pytest
 from jsonschema import Draft202012Validator
 
 from table_core import SCHEMA_VERSION
+from table_core.codec import SCHEMA_RESOURCE
 
 ROOT = Path(__file__).resolve().parents[3]
-SCHEMA = json.loads((ROOT / "schemas" / "table.schema.json").read_text())
+SCHEMA = json.loads(files("table_core").joinpath(SCHEMA_RESOURCE).read_text())
 EXAMPLES = sorted((ROOT / "examples").glob("*.json"))
 
 

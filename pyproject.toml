@@ -11,10 +11,11 @@ dependencies = []
 [dependency-groups]
 dev = [
     "table-core",
-    "jsonschema>=4.26.0",
     "pyright>=1.1.414",
     "pytest>=9.2.0",
     "ruff>=0.17.4",
+    "types-jsonschema>=4.26.0.20261006",
+    "lxml-stubs>=0.5.1",
 ]
 
 [tool.uv]

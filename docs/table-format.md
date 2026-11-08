@@ -2,7 +2,7 @@
 
 Draft version 0.3. One JSON object describes one table: original transcribed text, column-header paths, rows, merged cells, indentation, uncertainty, titles, and footnotes. Values remain strings. The format adds no inferred units, numeric types, measures, or other domain meaning.
 
-This is the application's single JSON output format. The version identifies a revision of the contract, not a selectable format. The [JSON Schema](../schemas/table.schema.json) checks field shapes; the additional structural checks below are also required. The JSON is produced from a fixed OCR transcription; [Mapping from the fixed OCR contract](#mapping-from-the-fixed-ocr-contract) describes how.
+This is the application's single JSON output format. The version identifies a revision of the contract, not a selectable format. The [JSON Schema](../packages/table_core/src/table_core/table.schema.json) checks field shapes; the additional structural checks below are also required. The JSON is produced from the fixed [OCR transcription format](transcription-format.md); [Mapping from the fixed OCR contract](#mapping-from-the-fixed-ocr-contract) describes how.
 
 ## Scope and source preservation
 
@@ -36,7 +36,7 @@ Unknown properties are rejected. Omit optional fields rather than using `null`. 
 
 Titles, headers, and body cells carry `text` and may carry `markers`, `note_refs`, and `unclear`. Headers and cells also have the structural fields described below.
 
-All text is Unicode. Preserve value characters, punctuation, dashes, and explicit empty strings. Do not parse numbers, fill blanks, expand abbreviations, or rewrite wording. Decode HTML character references; normalize CRLF/CR to LF. Discard indentation between structural HTML elements, but preserve cell text-node content. Markup such as `sup` and its content are removed from `text` and recorded as a marker at the position where they occurred, so `text` never contains marker characters. After removing markers, strip surrounding whitespace from `text`; a marker that stood in stripped leading or trailing whitespace takes position `0` or the end of the text. Compute marker positions only after these text transformations, and perform no further Unicode normalization.
+All text is Unicode. Preserve value characters, punctuation, dashes, and explicit empty strings. Do not parse numbers, fill blanks, expand abbreviations, or rewrite wording. Decode HTML character references. Collapse each run of HTML whitespace (space, tab, line feed, form feed, carriage return) to a single space and remove it from both ends of the text; other characters, including no-break spaces, are kept. Markup such as `sup` and its content are removed from `text` and recorded as a marker, so `text` never contains marker characters. A marker's position is directly after the last non-whitespace character that precedes it, or `0` if none does: `Description of security <sup>2</sup> (Date of issue)` gives `text: "Description of security (Date of issue)"` with the marker at position 23. Compute marker positions only after these text transformations, and perform no further Unicode normalization.
 
 `unclear: true` means the source transcription explicitly flagged uncertainty. Omit it when no uncertainty annotation was supplied. `false` means no unclear flag, not verified accuracy; consumers must not read either omission or false as a confidence guarantee. This annotation is allowed on a title, header, body cell, or note. It never authorizes guessing a replacement value.
 
@@ -59,11 +59,11 @@ A header has `id`, `text`, and the optional text annotations. A column has `id` 
 }
 ```
 
-This is a fragment; complete table examples are linked below. Resolving `c1` yields `Revenue -> 2025 -> Actual`. These labels are transcribed strings, not semantic field types.
+This is a fragment; complete table examples are linked below. Resolving `c1` yields `Revenue -> 2025 -> Actual`. These labels are transcribed strings, not semantic field types. When a path is written as text, blank headers are skipped; headers with equal text are not merged.
 
 A header spanning columns is one object shared by their paths. A header spanning header rows appears once in a path. Distinct source headers with equal text retain distinct IDs. A column with no represented header has `headers: []`; an explicitly blank header has its own object with `text: ""`. Paths may have different lengths.
 
-Each header must be referenced. An ID cannot repeat within one path. A shared header has the same ancestor prefix wherever it occurs, and the columns referencing it form a consecutive interval. This describes nested column-header structure; arbitrary crossing header associations are outside the initial format.
+Each header must be referenced. An ID cannot repeat within one path. The columns referencing a shared header form a consecutive interval. Headers need not form a tree: a units line printed under the column headings across the full width, such as `(In millions of dollars)`, is one header that sits under different headers in different columns, and it ends each of those paths. Arbitrary crossing header associations beyond such spans are outside the initial format.
 
 ## Rows, cells, and spans
 
@@ -99,13 +99,13 @@ A row path is derived rather than redundantly stored. First resolve spans. Marke
 
 A row's label is the sequence of nonempty texts visible in its label columns, in column order, including labels spanning from above. With the default single label column it is one string. Its level is the `level` of the cell covering the first column.
 
-A heading row has a nonempty label and no nonempty text in its value columns. A dash or other printed placeholder is value text. An entirely blank row is not a heading. Keep heading rows as ordinary rows with their empty value cells.
+A heading row has a nonempty label and no nonempty text in its value columns. A dash or other printed placeholder is value text. An entirely blank row is not a heading and does not change the open headings; its path is the open headings. Keep heading rows as ordinary rows with their empty value cells.
 
 Maintain an ordered list of open headings. For a new heading at level `n`, retain headings with levels less than `n`. For a value row at level `n`, retain headings with levels less than or equal to `n`. The path is those headings' labels followed by the current row's label, each label contributing its texts in column order. Add a new heading to the open list after constructing its path. Value rows never become parents merely due to indentation.
 
-Thus `Receipts:` at level 0 followed by `Taxes` at level 1 produces `Receipts: -> Taxes`. A value row at level 0 can also remain under that heading until a new heading closes it. With two label columns, a merged `Germany` label above `Manufacturing` and `Services` produces `Germany -> Manufacturing` and `Germany -> Services`. If the relevant indentation or heading status is unresolved, report the row path as unresolved instead of inventing it.
+Thus `Receipts:` at level 0 followed by `Taxes` at level 1 produces `Receipts: -> Taxes`. A value row at level 0 can also remain under that heading until a new heading closes it. With two label columns, a merged `Germany` label above `Manufacturing` and `Services` produces `Germany -> Manufacturing` and `Germany -> Services`. If the relevant indentation or heading status is unresolved, report the row path as unresolved instead of inventing it. A missing `level` leaves exactly the paths unresolved that depend on it: the row itself, and later rows while a heading of unknown level may still be open or while a row of unknown level may have closed a heading. A heading at level 0 closes every open heading and so resolves them again.
 
-The rule applies to the initial transcription convention, not to arbitrary table semantics. For hierarchy purposes, inspect value text visible in the resolved row, including a value spanning from above. When exporting value records, emit a merged value only at its starting position; resolving a row must not multiply that observation. A label cell spanning into value columns does not become its own value or establish an unambiguous heading; flag that case for inspection.
+The rule applies to the initial transcription convention, not to arbitrary table semantics. For hierarchy purposes, inspect value text visible in the resolved row, including a value spanning from above. When exporting value records, emit a merged value only at its starting position; resolving a row must not multiply that observation. A label cell spanning into value columns is a label, not a value; whether its row is a heading follows from the other cells in the row, so a section title spanning the full width is a heading. Flag that case for inspection.
 
 ## Marker occurrences
 
@@ -148,7 +148,8 @@ Under the fixed OCR contract, the converter separates a label only when the trim
 
 - a `<sup>` element, whose content is the label: `<sup>a</sup> Provisional figure.` gives label `a`;
 - one to three ASCII letters or digits followed by `/`: `1/`, `a/`, `p/`, `12/`;
-- one or more of `*`, `†`, `‡`, `§`.
+- one or more of `*`, `†`, `‡`, `§`;
+- one to three ASCII letters or digits without a slash, but only when they equal the normalized text of a marker in the same table's title, headers or cells: with a `<sup>p</sup>` in the table, `p Preliminary.` gives label `p`. Without such a marker the line has no label, so `An analysis of …` keeps its first word.
 
 The label keeps its printed spelling, and `text` is the remainder with surrounding whitespace removed. Any other line has no label, including `Source:` and `Note:` lines. The converter does not split a line that contains several printed notes; it stays one note, labeled from its start, and markers referring to the later notes remain unresolved. The transcription convention asks for one note per `tfoot` row, so such lines indicate a transcription problem.
 
@@ -167,7 +168,9 @@ For deterministic matching under the fixed OCR contract, trim surrounding whites
 
 The model emits an optional Markdown title immediately before each HTML table. That heading supplies `title.text`; `<caption>` is not an alternative runtime input. Legacy caption-based labels are converted offline for training/evaluation. In titles, `<sup>...</sup>` may explicitly mark an inline note marker, just as in header and body cells; a flattened number alone does not establish a marker.
 
-Header cells become shared header objects and ordered column paths. Body `tr` elements become row objects, and body cells retain their spans, `data-level`, and `data-unclear`. Superscript contents are removed from text and become markers at their positions. Under this contract, `tfoot` contains note lines; totals remain body rows. An unclear annotation on a footnote cell becomes `note.unclear`.
+Cells are placed with the HTML table algorithm, separately within `thead` and `tbody`; a rowspan reaching past the end of its section is shortened to the section end, as in HTML. The table has as many leaf columns as the wider of the two grids. A header grid with an uncovered position, or with two header cells claiming one position, makes the column paths unreliable and is a blocking issue; body coverage is checked by validation. A `data-level` outside the first column has no meaning in this format and is dropped with an issue.
+
+Header cells become shared header objects and ordered column paths; a table without `thead` gives every column `headers: []`. Body `tr` elements become row objects, and body cells retain their spans, `data-level`, and `data-unclear`. Superscript contents are removed from text and become markers at their positions. Under this contract, `tfoot` contains note lines; totals remain body rows. An unclear annotation on a footnote cell becomes `note.unclear`.
 
 The OCR contract cannot express more than one label column, so the converter omits `label_columns` and the default of 1 applies. For a table with several printed label columns, the later label columns are then exported as value columns. That is a known limitation of the current contract, not a property of the source. Reference annotations and reviewed corrections may set `label_columns` explicitly; extracting it from the model would require a contract revision.
 
@@ -178,7 +181,7 @@ Keep notes scoped to their table. Multiple tables in one response become separat
 Conformance requires shape validation plus these structural checks:
 
 1. IDs are unique within their specified scopes; references resolve to the correct object type.
-2. Columns, rows, and cells retain source order. Header paths satisfy the prefix and consecutive-interval rules.
+2. Columns, rows, and cells retain source order. The columns sharing a header are consecutive.
 3. Each cell covers consecutive columns and a positive number of rows within bounds. Every body position is covered exactly once.
 4. `level`, when present, is a nonnegative integer on a cell covering the first column. `label_columns` does not exceed the number of columns and leaves a value column when there is more than one column.
 5. Marker positions lie within the containing text in code points and are non-decreasing; marker text contains non-whitespace; linked notes exist.

@@ -4,7 +4,8 @@ Turns tables in scanned PDFs into structured JSON: a layout detector proposes re
 
 ## Where things are
 
-- `docs/table-format.md`, `schemas/table.schema.json`, `examples/`: the table JSON format (draft 0.3). This is the contract; change the spec, schema and examples together.
+- `docs/table-format.md`, `packages/table_core/src/table_core/table.schema.json`, `examples/`: the table JSON format (draft 0.3). This is the contract; change the spec, schema and examples together.
+- `docs/transcription-format.md`: the fixed OCR transcription the model emits and the parser accepts (contract revision 1). Changing it means retraining.
 - `planning/`: architecture and build plan. **Not in git** (ignored). Read `planning/architecture.md` and `planning/build-plan.md` before starting a build step; never move planning documents into tracked folders.
 - `packages/table_core/`: parsing, JSON proposal, validation and codecs. Pure Python; no GPU, network, PDF or web dependencies.
 - Later members (`document_prep`, `extraction`, `training`, `evaluation`, `apps/serving`) are added when their build step starts, not before.
