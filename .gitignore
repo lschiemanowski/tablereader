@@ -221,3 +221,6 @@ __marimo__/
 
 # Planning documents (architecture, build plan) are kept out of version control
 planning/
+
+# Run outputs (recrops, sample sheets)
+/data/

@@ -8,12 +8,15 @@ Turns tables in scanned PDFs into structured JSON: a layout detector proposes re
 - `docs/transcription-format.md`: the fixed OCR transcription the model emits and the parser accepts (contract revision 1). Changing it means retraining.
 - `planning/`: architecture and build plan. **Not in git** (ignored). Read `planning/architecture.md` and `planning/build-plan.md` before starting a build step; never move planning documents into tracked folders.
 - `packages/table_core/`: parsing, JSON proposal, validation and codecs. Pure Python; no GPU, network, PDF or web dependencies.
-- Later members (`document_prep`, `extraction`, `training`, `evaluation`, `apps/serving`) are added when their build step starts, not before.
+- `packages/document_prep/`: page rendering (pypdfium2, pinned), crop extension over titles and footnotes, Heron layout detection (optional `layout` extra). Crop pixels depend on these versions and on `PreparationSettings`; change them deliberately.
+- `scripts/`: one-off runs against table_benchmark (read-only there); outputs go to the gitignored `data/`. Run them from this repository, never from inside table_benchmark.
+- Later members (`extraction`, `training`, `evaluation`, `apps/serving`) are added when their build step starts, not before.
 
 ## Commands
 
 ```bash
 uv sync                    # install the workspace and dev tools
+uv sync --group layout     # also torch/transformers for Heron layout detection (GPU)
 uv run pytest              # tests
 uv run ruff check          # lint
 uv run ruff format         # format

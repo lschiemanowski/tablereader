@@ -11,12 +11,15 @@ dependencies = []
 [dependency-groups]
 dev = [
     "table-core",
+    "document-prep",
     "pyright>=1.1.414",
     "pytest>=9.2.0",
     "ruff>=0.17.4",
     "types-jsonschema>=4.26.0.20261006",
     "lxml-stubs>=0.5.1",
 ]
+# GPU layout detection; not needed for tests or CI.
+layout = ["document-prep[layout]"]
 
 [tool.uv]
 package = false
@@ -26,6 +29,7 @@ members = ["packages/*"]
 
 [tool.uv.sources]
 table-core = { workspace = true }
+document-prep = { workspace = true }
 
 [tool.pytest.ini_options]
 testpaths = ["packages"]
@@ -39,7 +43,7 @@ target-version = "py312"
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["table_core"]
+known-first-party = ["table_core", "document_prep"]
 
 [tool.pyright]
 pythonVersion = "3.12"
@@ -47,4 +51,4 @@ venvPath = "."
 venv = ".venv"
 include = ["packages"]
 typeCheckingMode = "standard"
-strict = ["packages/table_core/src"]
+strict = ["packages/table_core/src", "packages/document_prep/src"]
