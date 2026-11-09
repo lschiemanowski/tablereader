@@ -22,8 +22,8 @@ configs:
 
 # Scanned tables
 
-Crops of printed tables from {documents} public-sector, scientific and historical documents, scanned and
-born-digital, with a transcription of the table as HTML under a fixed format and the table as structured
+Crops of printed tables from {documents} public-sector, scientific and historical documents, digital and
+scanned, with a transcription of the table as HTML under a fixed format and the table as structured
 JSON. Validation and test are fully transcribed; most of train is not yet. Schema version {schema_version}.
 
 | Split | Crop parts | Accepted transcriptions | Rejected | Unlabeled |
