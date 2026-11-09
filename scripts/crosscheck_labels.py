@@ -4,7 +4,7 @@ For every labeled part, the transcription becomes a grid (title and footnotes dr
 compared with the v1 reference grid of the same crop part, and with the earlier Terra grid where one exists.
 Writes `<labels>/crosscheck.jsonl` and prints agreement by split and medium. Read-only on the benchmark.
 
-    uv run python scripts/crosscheck_labels.py ~/workspace/table_benchmark --labels data/labels/terra
+    uv run python scripts/crosscheck_labels.py path/to/table_benchmark --labels data/labels/terra
 """
 
 import argparse

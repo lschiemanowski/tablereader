@@ -5,8 +5,8 @@ in table_benchmark's earlier Terra cohort (`data/full/terra-6.1-train/cohort.jso
 cross-checked against both v1 and the earlier Terra grids. Reads the recrops from `recrop_benchmark.py` and
 appends one JSON line per part to `<out>/results.jsonl` as results arrive; a rerun skips parts already done.
 
-    uv run python scripts/label_benchmark.py ~/workspace/table_benchmark --pilot 40   # stratified sample
-    uv run python scripts/label_benchmark.py ~/workspace/table_benchmark              # full scope
+    uv run python scripts/label_benchmark.py path/to/table_benchmark --pilot 40   # stratified sample
+    uv run python scripts/label_benchmark.py path/to/table_benchmark              # full scope
 """
 
 import argparse

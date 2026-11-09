@@ -5,7 +5,7 @@ Reads the benchmark (read-only) and writes into --out: `images/<region_id>.png` 
 per part in benchmark order, with the boxes, the settings and the renderer. Rerunning with the same versions
 gives byte-identical images.
 
-    uv run python scripts/recrop_benchmark.py ~/workspace/table_benchmark --workers 48
+    uv run python scripts/recrop_benchmark.py path/to/table_benchmark --workers 48
 """
 
 import argparse

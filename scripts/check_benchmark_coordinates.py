@@ -3,7 +3,7 @@
 Renders every page at 180 DPI (the v1 resolution) with document_prep, cuts each part's tight box, and compares
 it with the v1 PNG (rendered by Poppler). Reports size mismatches and the best alignment within a few pixels.
 
-    uv run python scripts/check_benchmark_coordinates.py ~/workspace/table_benchmark --workers 32
+    uv run python scripts/check_benchmark_coordinates.py path/to/table_benchmark --workers 32
 """
 
 import argparse

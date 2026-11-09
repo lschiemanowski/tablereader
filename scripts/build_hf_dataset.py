@@ -9,7 +9,7 @@ The recrops extend the v1 crops over titles and footnotes, which the audit scree
 crop pixels. As an extra screen, transcriptions whose text suggests third-party credit or personal data are
 written to `<out>/flags.jsonl` and left out until cleared (`--cleared`, one region id per line).
 
-    uv run --group train --with datasets==5.1.0 python scripts/build_hf_dataset.py ~/workspace/table_benchmark
+    uv run --group train --with datasets==5.1.0 python scripts/build_hf_dataset.py path/to/table_benchmark
 """
 
 import argparse

@@ -1,5 +1,5 @@
 ---
-pretty_name: Table reader benchmark
+pretty_name: Scanned tables
 license: other
 license_name: mixed-source-terms
 license_link: LICENSE
@@ -20,7 +20,7 @@ configs:
     path: data/test-*.parquet
 ---
 
-# Table reader benchmark
+# Scanned tables
 
 Crops of printed tables from {documents} public-sector, scientific and historical documents, scanned and
 born-digital, with a transcription of the table as HTML under a fixed format and the table as structured
@@ -68,6 +68,9 @@ and can miss material that neither caught; please report anything that should no
 (`scanned` or `born_digital`), `page` (one-based PDF page), `crop_box` and `page_size` (PDF points, before
 rotation), `v1_label`, `transcription`, `transcription_status`, `transcription_model`, `region_status`
 (`tables`, `not_a_table` or `failed`), `tables` (JSON text), `rights_basis`, `attribution`, `source_url`.
+
+Built and used by [tablereader](https://github.com/lschiemanowski/tablereader); the model trained on it is
+[lschiemanowski/tablereader-lightonocr-v0](https://huggingface.co/lschiemanowski/tablereader-lightonocr-v0).
 
 ## Rights
 

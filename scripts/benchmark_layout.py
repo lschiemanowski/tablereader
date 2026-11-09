@@ -4,7 +4,7 @@ Pages are rendered at the settings' layout resolution (72 DPI) in worker process
 the GPU. Writes `<out>/<document_id>.json`: model, threshold, and per page the regions (label, score, box in
 points). Needs the layout extra: `uv sync --group layout`.
 
-    uv run python scripts/benchmark_layout.py ~/workspace/table_benchmark --workers 32
+    uv run python scripts/benchmark_layout.py path/to/table_benchmark --workers 32
 """
 
 import argparse
