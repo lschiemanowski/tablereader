@@ -1,7 +1,7 @@
 [project]
 name = "tablereader"
 version = "0.1.0"
-description = "Read the tables in scanned and born-digital PDFs into structured JSON"
+description = "Read the tables in PDFs, including scans, into structured JSON"
 license = "Apache-2.0"
 authors = [{ name = "Lothar Schiemanowski" }]
 requires-python = ">=3.12,<3.13"

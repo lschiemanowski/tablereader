@@ -1,4 +1,4 @@
-"""Read the tables in scanned and born-digital PDFs into structured JSON."""
+"""Read the tables in PDFs, including scans, into structured JSON."""
 
 from tablereader.reader import DocumentResult, RegionRead, TableReader, read_pdf
 from tablereader.release import DEFAULT_RELEASE, ModelRelease, load_release
