@@ -1,0 +1,33 @@
+[project]
+name = "tablereader"
+version = "0.1.0"
+description = "Read the tables in scanned and born-digital PDFs into structured JSON"
+license = "Apache-2.0"
+authors = [{ name = "Lothar Schiemanowski" }]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "table-core",
+    "document-prep",
+    "extraction",
+    "huggingface-hub>=1.0",
+    "fastapi>=0.118",
+    "python-multipart>=0.0.20",
+    "uvicorn>=0.37",
+]
+
+[project.optional-dependencies]
+# Table detection on the GPU (Docling Heron through torch/transformers). vLLM, which serves the model, is a
+# separate install: `uv tool install vllm`.
+gpu = ["document-prep[layout]"]
+
+[project.scripts]
+tablereader = "tablereader.cli:main"
+
+[tool.uv.sources]
+table-core = { workspace = true }
+document-prep = { workspace = true }
+extraction = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"

@@ -25,3 +25,11 @@ def render(path: Path, page: int, scale: float) -> tuple[Image.Image, tuple[floa
     finally:
         pdf.close()
     return image, (float(width), float(height))
+
+
+def page_count(path: Path) -> int:
+    pdf = pdfium.PdfDocument(path)
+    try:
+        return len(pdf)
+    finally:
+        pdf.close()

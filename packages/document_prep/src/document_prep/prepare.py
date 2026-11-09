@@ -6,6 +6,7 @@ import numpy as np
 from PIL import Image
 
 from document_prep._pdfium import RENDERER as RENDERER  # re-exported: the renderer name saved with crops
+from document_prep._pdfium import page_count as page_count  # re-exported
 from document_prep._pdfium import render
 from document_prep.crop import Gray, extend_box
 from document_prep.models import (
