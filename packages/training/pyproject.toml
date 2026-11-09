@@ -1,0 +1,30 @@
+[project]
+name = "training"
+version = "0.1.0"
+description = "Assemble training data, fine-tune LightOnOCR-3 and run self-training on the rebuilt benchmark"
+license = "Apache-2.0"
+authors = [{ name = "Lothar Schiemanowski" }]
+requires-python = ">=3.12,<3.13"
+dependencies = ["table-core", "document-prep", "extraction", "evaluation"]
+
+[project.optional-dependencies]
+# Fine-tuning on the GPU. torch and transformers match document_prep's layout pins; vLLM, for serving the
+# trained models, is a separate install (`uv tool install vllm`). Installed with `uv sync --group train`.
+gpu = [
+    "accelerate==1.15.0",
+    "flash-linear-attention==0.6.0",
+    "peft==0.21.2",
+    "torch==2.15.0",
+    "torchvision==0.29.2",  # the LightOnOCR-3 (Qwen3-VL) processor needs it
+    "transformers==5.22.1",
+]
+
+[tool.uv.sources]
+table-core = { workspace = true }
+document-prep = { workspace = true }
+extraction = { workspace = true }
+evaluation = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"

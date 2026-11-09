@@ -14,6 +14,7 @@ dev = [
     "document-prep",
     "extraction",
     "evaluation",
+    "training",
     "pyright>=1.1.414",
     "pytest>=9.2.0",
     "ruff>=0.17.4",
@@ -22,6 +23,8 @@ dev = [
 ]
 # GPU layout detection; not needed for tests or CI.
 layout = ["document-prep[layout]"]
+# Fine-tuning LightOnOCR-3 (GPU). Includes the layout pins, so one environment serves both.
+train = ["document-prep[layout]", "training[gpu]"]
 
 [tool.uv]
 package = false
@@ -34,6 +37,7 @@ table-core = { workspace = true }
 document-prep = { workspace = true }
 extraction = { workspace = true }
 evaluation = { workspace = true }
+training = { workspace = true }
 
 [tool.pytest.ini_options]
 testpaths = ["packages"]
@@ -47,7 +51,7 @@ target-version = "py312"
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["table_core", "document_prep", "extraction", "evaluation"]
+known-first-party = ["table_core", "document_prep", "extraction", "evaluation", "training"]
 
 [tool.pyright]
 pythonVersion = "3.12"
@@ -55,4 +59,4 @@ venvPath = "."
 venv = ".venv"
 include = ["packages"]
 typeCheckingMode = "standard"
-strict = ["packages/table_core/src", "packages/document_prep/src", "packages/extraction/src", "packages/evaluation/src"]
+strict = ["packages/table_core/src", "packages/document_prep/src", "packages/extraction/src", "packages/evaluation/src", "packages/training/src/training/data.py", "packages/training/src/training/pipeline.py"]
