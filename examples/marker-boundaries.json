@@ -1,0 +1,177 @@
+{
+  "schema_version": "0.3",
+  "id": "table-5",
+  "title": {
+    "text": "Marker boundary fixtures"
+  },
+  "headers": [
+    {
+      "id": "h0",
+      "text": "Item"
+    },
+    {
+      "id": "h1",
+      "text": "2025"
+    }
+  ],
+  "columns": [
+    {
+      "id": "c0",
+      "headers": [
+        "h0"
+      ]
+    },
+    {
+      "id": "c1",
+      "headers": [
+        "h1"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "id": "r0",
+      "cells": [
+        {
+          "id": "l0",
+          "columns": [
+            "c0"
+          ],
+          "text": "Numeric marker",
+          "level": 0
+        },
+        {
+          "id": "v0",
+          "columns": [
+            "c1"
+          ],
+          "text": "10",
+          "markers": [
+            {
+              "at": 2,
+              "text": "1",
+              "note_ref": "n1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "r1",
+      "cells": [
+        {
+          "id": "l1",
+          "columns": [
+            "c0"
+          ],
+          "text": "Literal digits",
+          "level": 0
+        },
+        {
+          "id": "v1",
+          "columns": [
+            "c1"
+          ],
+          "text": "101"
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "cells": [
+        {
+          "id": "l2",
+          "columns": [
+            "c0"
+          ],
+          "text": "Unresolved marker",
+          "level": 0
+        },
+        {
+          "id": "v2",
+          "columns": [
+            "c1"
+          ],
+          "text": "40",
+          "markers": [
+            {
+              "at": 2,
+              "text": "†"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "r3",
+      "cells": [
+        {
+          "id": "l3",
+          "columns": [
+            "c0"
+          ],
+          "text": "Unicode offsets",
+          "level": 0
+        },
+        {
+          "id": "v3",
+          "columns": [
+            "c1"
+          ],
+          "text": "A😀",
+          "markers": [
+            {
+              "at": 2,
+              "text": "1",
+              "note_ref": "n1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "r4",
+      "cells": [
+        {
+          "id": "l4",
+          "columns": [
+            "c0"
+          ],
+          "text": "Repeated reference",
+          "level": 0
+        },
+        {
+          "id": "v4",
+          "columns": [
+            "c1"
+          ],
+          "text": "10 / 20",
+          "markers": [
+            {
+              "at": 2,
+              "text": "*",
+              "note_ref": "n2"
+            },
+            {
+              "at": 7,
+              "text": "*",
+              "note_ref": "n2"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "notes": [
+    {
+      "id": "n1",
+      "label": "1/",
+      "text": "Illustrative note."
+    },
+    {
+      "id": "n2",
+      "label": "*",
+      "text": "One note referenced twice."
+    }
+  ]
+}

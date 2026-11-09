@@ -218,3 +218,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Planning documents (architecture, build plan) are kept out of version control
+planning/
+
+# Run outputs (recrops, sample sheets)
+/data/
+
+# Separate environment for long GPU runs (UV_PROJECT_ENVIRONMENT=.venv-train)
+.venv-*/

@@ -1,0 +1,123 @@
+{
+  "schema_version": "0.3",
+  "id": "table-2",
+  "title": {
+    "text": "Table 2. Figures by country and sector"
+  },
+  "label_columns": 2,
+  "headers": [
+    {
+      "id": "h-country",
+      "text": "Country"
+    },
+    {
+      "id": "h-sector",
+      "text": "Sector"
+    },
+    {
+      "id": "h-2024",
+      "text": "2024"
+    },
+    {
+      "id": "h-2025",
+      "text": "2025"
+    }
+  ],
+  "columns": [
+    {
+      "id": "c0",
+      "headers": [
+        "h-country"
+      ]
+    },
+    {
+      "id": "c1",
+      "headers": [
+        "h-sector"
+      ]
+    },
+    {
+      "id": "c2",
+      "headers": [
+        "h-2024"
+      ]
+    },
+    {
+      "id": "c3",
+      "headers": [
+        "h-2025"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "id": "r0",
+      "cells": [
+        {
+          "id": "a",
+          "columns": [
+            "c0"
+          ],
+          "text": "Germany",
+          "rowspan": 2,
+          "level": 0
+        },
+        {
+          "id": "b",
+          "columns": [
+            "c1"
+          ],
+          "text": "Manufacturing"
+        },
+        {
+          "id": "c",
+          "columns": [
+            "c2"
+          ],
+          "text": "10"
+        },
+        {
+          "id": "d",
+          "columns": [
+            "c3"
+          ],
+          "text": "12"
+        }
+      ]
+    },
+    {
+      "id": "r1",
+      "cells": [
+        {
+          "id": "e",
+          "columns": [
+            "c1"
+          ],
+          "text": "Services"
+        },
+        {
+          "id": "f",
+          "columns": [
+            "c2",
+            "c3"
+          ],
+          "text": "Not disclosed",
+          "markers": [
+            {
+              "at": 13,
+              "text": "*",
+              "note_ref": "n1"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "notes": [
+    {
+      "id": "n1",
+      "label": "*",
+      "text": "Disclosure withheld for this entry."
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+[project]
+name = "extraction"
+version = "0.1.0"
+description = "Recognize prepared table regions and turn the responses into checked table results"
+license = "Apache-2.0"
+authors = [{ name = "Lothar Schiemanowski" }]
+requires-python = ">=3.12,<3.13"
+dependencies = ["table-core", "document-prep", "httpx>=0.28.1"]
+
+[tool.uv.sources]
+table-core = { workspace = true }
+document-prep = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"

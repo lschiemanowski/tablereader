@@ -1,0 +1,74 @@
+{
+  "schema_version": "0.3",
+  "id": "table-3",
+  "headers": [
+    {
+      "id": "h-left",
+      "text": "Amount",
+      "markers": [
+        {
+          "at": 6,
+          "text": "*"
+        }
+      ]
+    },
+    {
+      "id": "h-right",
+      "text": "Amount",
+      "markers": [
+        {
+          "at": 6,
+          "text": "*"
+        }
+      ]
+    }
+  ],
+  "columns": [
+    {
+      "id": "c0",
+      "headers": [
+        "h-left"
+      ]
+    },
+    {
+      "id": "c1",
+      "headers": [
+        "h-right"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "id": "r0",
+      "cells": [
+        {
+          "id": "a",
+          "columns": [
+            "c0"
+          ],
+          "text": "",
+          "level": 0
+        },
+        {
+          "id": "b",
+          "columns": [
+            "c1"
+          ],
+          "text": "—"
+        }
+      ]
+    }
+  ],
+  "notes": [
+    {
+      "id": "n-left",
+      "label": "*",
+      "text": "See accompanying explanation."
+    },
+    {
+      "id": "n-unattached",
+      "label": "*",
+      "text": "Values revised."
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+# Workspace root. It is not a package itself; members live under packages/ (and later apps/).
+[project]
+name = "tablereader-workspace"
+version = "0.0.0"
+description = "Extract tables from scanned PDFs into structured JSON"
+license = "Apache-2.0"
+authors = [{ name = "Lothar Schiemanowski" }]
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "table-core",
+    "document-prep",
+    "extraction",
+    "evaluation",
+    "training",
+    "tablereader",
+    "pyright>=1.1.414",
+    "pytest>=9.2.0",
+    "ruff>=0.17.4",
+    "types-jsonschema>=4.26.0.20261006",
+    "lxml-stubs>=0.5.1",
+]
+# GPU layout detection; not needed for tests or CI.
+layout = ["document-prep[layout]"]
+# Fine-tuning LightOnOCR-3 (GPU). Includes the layout pins, so one environment serves both.
+train = ["document-prep[layout]", "training[gpu]"]
+# Running the reader and the service on a GPU (vLLM is a separate tool install).
+gpu = ["tablereader[gpu]"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+table-core = { workspace = true }
+document-prep = { workspace = true }
+extraction = { workspace = true }
+evaluation = { workspace = true }
+training = { workspace = true }
+tablereader = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = ["packages"]
+addopts = ["--import-mode=importlib"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["table_core", "document_prep", "extraction", "evaluation", "training", "tablereader"]
+
+[tool.pyright]
+pythonVersion = "3.12"
+venvPath = "."
+venv = ".venv"
+include = ["packages"]
+typeCheckingMode = "standard"
+strict = ["packages/table_core/src", "packages/document_prep/src", "packages/extraction/src", "packages/evaluation/src", "packages/training/src/training/data.py", "packages/training/src/training/pipeline.py", "packages/tablereader/src"]

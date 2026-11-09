@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Table JSON format draft 0.3",
+  "description": "Structural row view. References, spans, hierarchy, Unicode scalar values and marker positions require additional checks in docs/table-format.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "headers",
+    "columns",
+    "rows"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.3"
+    },
+    "id": {
+      "$ref": "#/$defs/id"
+    },
+    "title": {
+      "$ref": "#/$defs/textBlock"
+    },
+    "label_columns": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1
+    },
+    "headers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/header"
+      }
+    },
+    "columns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/column"
+      }
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    },
+    "notes": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/note"
+      }
+    },
+    "note_refs": {
+      "$ref": "#/$defs/noteRefs"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "noteRefs": {
+      "type": "array",
+      "uniqueItems": true,
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "textBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "text"
+      ],
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "note_refs": {
+          "$ref": "#/$defs/noteRefs"
+        },
+        "markers": {
+          "$ref": "#/$defs/markers"
+        },
+        "unclear": {
+          "type": "boolean"
+        }
+      }
+    },
+    "header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "text": {
+          "type": "string"
+        },
+        "note_refs": {
+          "$ref": "#/$defs/noteRefs"
+        },
+        "markers": {
+          "$ref": "#/$defs/markers"
+        },
+        "unclear": {
+          "type": "boolean"
+        }
+      }
+    },
+    "column": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "headers"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "headers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        }
+      }
+    },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "cells"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "cells": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/cell"
+          }
+        }
+      }
+    },
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "columns",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "text": {
+          "type": "string"
+        },
+        "rowspan": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "note_refs": {
+          "$ref": "#/$defs/noteRefs"
+        },
+        "markers": {
+          "$ref": "#/$defs/markers"
+        },
+        "unclear": {
+          "type": "boolean"
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "note": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string"
+        },
+        "unclear": {
+          "type": "boolean"
+        }
+      }
+    },
+    "markers": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/marker"
+      }
+    },
+    "marker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "at",
+        "text"
+      ],
+      "properties": {
+        "at": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "note_ref": {
+          "$ref": "#/$defs/id"
+        }
+      }
+    }
+  }
+}
