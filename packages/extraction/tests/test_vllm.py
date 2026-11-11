@@ -10,6 +10,7 @@ import pytest
 from PIL import Image
 
 from document_prep.models import Box, DocumentSource, PreparationSettings, PreparedRegion, TableRegion
+from extraction import vllm
 from extraction.results import ComponentFailure, FinishReason
 from extraction.vllm import MAX_EDGE, VllmRecognizer, model_image
 
@@ -79,3 +80,15 @@ def test_http_errors_are_component_failures(status: int, retryable: bool) -> Non
     with pytest.raises(ComponentFailure) as failure:
         recognize(VllmRecognizer(model="m", transport=serve(status, {"error": "x"}, [])))
     assert failure.value.retryable is retryable
+
+
+def test_server_start_waits_for_gpu_memory(monkeypatch: pytest.MonkeyPatch) -> None:
+    readings = iter([0.70, 0.80, 0.95])
+    monkeypatch.setattr(vllm, "gpu_free_fraction", lambda: next(readings))
+    vllm.wait_for_gpu_memory(0.9, poll=0)
+    assert next(readings, None) is None  # polled until the third reading cleared the target
+
+
+def test_memory_wait_gives_up_without_nvidia_smi(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(vllm, "gpu_free_fraction", lambda: None)
+    vllm.wait_for_gpu_memory(0.9, poll=0)
