@@ -50,6 +50,12 @@ def test_self_label_token_limit() -> None:
     assert rejection(long, max_tokens=10000) == "too long"
 
 
+def test_self_labels_of_benchmark_non_tables_are_kept_only_as_not_a_table() -> None:
+    assert rejection(label(TABLE), benchmark_label="not_a_table") == "benchmark says not a table"
+    assert rejection(label("NOT_A_TABLE"), benchmark_label="not_a_table") is None
+    assert rejection(label(TABLE), benchmark_label="wrongly_cropped") is None
+
+
 def test_training_target_drops_indentation_only() -> None:
     target = training_target("\n" + TABLE + "\n")
     assert (

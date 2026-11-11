@@ -3,7 +3,7 @@
 import pytest
 
 from evaluation.grids import Grid, GridCell, compare_grids, grid_from_parsed, normalize_cell
-from evaluation.records import NOT_A_TABLE, crop_score, normalize_label, table_records
+from evaluation.records import NOT_A_TABLE, crop_score, normalize_label, normalize_value, table_records
 from table_core.models import Table
 from table_core.parsing import ParsedTable, parse_output
 from table_core.structure import propose_table
@@ -42,9 +42,9 @@ def test_records_carry_row_path_column_path_and_value() -> None:
     (table,) = tables(HIERARCHY)
     result = table_records(table)
     assert result.records == {
-        (("receipts", "taxes"), ("2025", "actual"), "100"),
-        (("receipts", "taxes"), ("2025", "budget"), "90"),
-        (("receipts", "duties"), ("2025", "actual"), "Not disclosed"),  # a merged value is one record
+        (("receipts", "taxes"), "2025 actual", "100"),
+        (("receipts", "taxes"), "2025 budget", "90"),
+        (("receipts", "duties"), "2025 actual", "Not disclosed"),  # a merged value is one record
     }
     assert (result.level_fallback_rows, result.duplicates) == (0, 0)
 
@@ -59,7 +59,7 @@ def test_missing_level_falls_back_to_zero_and_is_counted() -> None:
     )
     result = table_records(table)
     assert result.level_fallback_rows == 1
-    assert result.records == {(("a", "x"), (), "1")}
+    assert result.records == {(("a", "x"), "", "1")}
 
 
 def test_duplicate_records_are_counted() -> None:
@@ -76,6 +76,8 @@ def test_duplicate_records_are_counted() -> None:
         ("1945 \N{EN DASH} 1946", "1945-1946"),
         ("Rate  of  Interest", "rate of interest"),
         ("2 ½ percent", "2 1/2 percent"),
+        ("Paid for the purchase of:-", "paid for the purchase of"),
+        ("1945 \N{MINUS SIGN} 46", "1945-46"),
     ],
 )
 def test_normalize_label(label: str, normalized: str) -> None:
@@ -93,6 +95,24 @@ def test_crop_score() -> None:
     assert crop_score(NOT_A_TABLE, reference) == 0.0
     with pytest.raises(ValueError):
         crop_score(None, reference)
+
+
+def test_a_heading_on_two_lines_scores_the_same_as_two_header_rows() -> None:
+    one_cell = (
+        "<table><thead><tr><th></th><th>2024 £000</th></tr></thead><tbody><tr><td>A</td><td>1</td></tr></tbody></table>"
+    )
+    two_rows = (
+        "<table><thead><tr><th></th><th>2024</th></tr><tr><th></th><th>£000</th></tr></thead>"
+        "<tbody><tr><td>A</td><td>1</td></tr></tbody></table>"
+    )
+    assert crop_score(tables(one_cell), tables(two_rows)) == 1.0
+
+
+def test_nil_dashes_match_whatever_the_glyph() -> None:
+    row = "<table><tbody><tr><td>A</td><td>{}</td></tr></tbody></table>"
+    assert crop_score(tables(row.format("-")), tables(row.format("\N{EM DASH}"))) == 1.0
+    assert normalize_value("(1\N{EN DASH}2)") == "(1-2)"
+    assert crop_score(tables(row.format("-")), tables(row.format("0"))) == 0.0
 
 
 def test_records_ignore_markers_and_titles() -> None:

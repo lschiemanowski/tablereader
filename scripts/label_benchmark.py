@@ -7,6 +7,11 @@ appends one JSON line per part to `<out>/results.jsonl` as results arrive; a rer
 
     uv run python scripts/label_benchmark.py path/to/table_benchmark --pilot 40   # stratified sample
     uv run python scripts/label_benchmark.py path/to/table_benchmark              # full scope
+
+Second batch, for r2 (user decision, 2026-11-11; `--scope r2`): every training part table_benchmark marks
+`not_a_table` or `wrongly_cropped` (the first batch had only `table` parts, so the model never learned
+NOT_A_TABLE), and `--tables` more `table` parts, half scanned and half digital, drawn round-robin over series so
+each series contributes about equally.
 """
 
 import argparse
@@ -70,15 +75,44 @@ def select(rows: list[dict[str, Any]], benchmark: Path, pilot: int | None, seed:
     return sample[:pilot]
 
 
+def select_r2(rows: list[dict[str, Any]], done: set[str], tables: int, seed: int) -> list[dict[str, Any]]:
+    pool = [r for r in rows if r["split"] == "train" and Path(r["image"]).stem not in done]
+    chosen = [r for r in pool if r["label"] in ("not_a_table", "wrongly_cropped")]
+    rng = random.Random(seed)
+    for scanned, quota in ((True, tables // 2), (False, tables - tables // 2)):
+        series: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        for r in pool:
+            if r["label"] == "table" and (r["medium"] != "born_digital") == scanned:
+                series[r["source_id"]].append(r)
+        queues = [rng.sample(v, len(v)) for _, v in sorted(series.items())]
+        rng.shuffle(queues)
+        taken = 0
+        while taken < quota and any(queues):
+            for queue in queues:
+                if queue and taken < quota:
+                    chosen.append(queue.pop())
+                    taken += 1
+    rng.shuffle(chosen)
+    return chosen
+
+
 async def run(args: argparse.Namespace) -> None:
     header = json.loads((args.recrops / "settings.json").read_text())
     fields: dict[str, Any] = {k: tuple(v) if isinstance(v, list) else v for k, v in header["settings"].items()}
     settings = PreparationSettings(**fields)
     rows = [json.loads(line) for line in (args.recrops / "manifest.jsonl").open()]
-    todo = select(rows, args.benchmark, args.pilot, args.seed)
     args.out.mkdir(parents=True, exist_ok=True)
     results_path = args.out / "results.jsonl"
     done = {json.loads(line)["region_id"] for line in results_path.open()} if results_path.exists() else set[str]()
+    if args.scope == "r2":
+        selection = args.out / "r2-selection.jsonl"
+        if not selection.exists():  # fixed once drawn, so a rerun resumes the same parts
+            picked = select_r2(rows, done, args.tables, args.seed)
+            selection.write_text("".join(json.dumps({"region_id": Path(r["image"]).stem}) + "\n" for r in picked))
+        wanted = {json.loads(line)["region_id"] for line in selection.open()}
+        todo = [r for r in rows if Path(r["image"]).stem in wanted]
+    else:
+        todo = select(rows, args.benchmark, args.pilot, args.seed)
     todo = [r for r in todo if Path(r["image"]).stem not in done]
     by_region = {Path(r["image"]).stem: r for r in todo}
     print(f"{len(todo)} parts to label ({len(done)} already done); prompt {PROMPT_SHA256[:12]}", flush=True)
@@ -134,6 +168,8 @@ def main() -> None:
     parser.add_argument("--recrops", type=Path, default=Path("data/recrops"))
     parser.add_argument("--out", type=Path, default=Path("data/labels/terra"))
     parser.add_argument("--pilot", type=int, help="label a stratified sample of this size instead of the full scope")
+    parser.add_argument("--scope", choices=["first", "r2"], default="first", help="which batch to label")
+    parser.add_argument("--tables", type=int, default=1500, help="r2: table parts to add")
     parser.add_argument("--seed", type=int, default=20261108)
     parser.add_argument("--max-in-flight", type=int, default=6)
     parser.add_argument("--cli", type=Path, default=DEFAULT_CLI)

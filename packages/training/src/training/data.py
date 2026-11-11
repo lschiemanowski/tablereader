@@ -103,8 +103,14 @@ def _box(values: list[float]) -> Box:
     return Box(left=values[0], top=values[1], right=values[2], bottom=values[3])
 
 
-def rejection(label: Mapping[str, Any], *, max_tokens: int | None = None) -> str | None:
-    """Why `label` is unfit as a training target, or None if it is accepted."""
+def rejection(
+    label: Mapping[str, Any], *, max_tokens: int | None = None, benchmark_label: str | None = None
+) -> str | None:
+    """Why `label` is unfit as a training target, or None if it is accepted.
+
+    With `benchmark_label` (self-labels), a part table_benchmark marks `not_a_table` is kept only as NOT_A_TABLE:
+    r1's teacher transcribed all 656 such parts as tables, and training on them taught the opposite.
+    """
     if label["status"] == "failed":
         return "failed"
     response: Mapping[str, Any] = label.get("response") or {}
@@ -119,6 +125,8 @@ def rejection(label: Mapping[str, Any], *, max_tokens: int | None = None) -> str
             return "not ready"
     if max_tokens is not None and usage.get("completion_tokens", 0) > max_tokens:
         return "too long"
+    if benchmark_label == "not_a_table" and label["status"] != "not_a_table":
+        return "benchmark says not a table"
     return None
 
 

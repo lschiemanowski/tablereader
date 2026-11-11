@@ -69,6 +69,7 @@ Title:
 Structure:
 
 - Every row has the same number of columns once spans are expanded.
+- Each printed column is its own column, also under a shared heading. Money printed in pounds, shillings and pence is three columns, with `£`, `s.` and `d.` as the lowest header row (`3,791` · `12` · `6`); a value is never joined across printed columns.
 - `thead` holds the rows printed as column headings: above the data, and set apart by position, rules or typeface. A table that prints no column headings has no `thead`, and no header row is invented.
 - When there is a `thead`, it covers every column; the cell above the first column is a `th` and may be empty.
 - Two independent tables in one image, side by side or one above the other, are two `<table>` elements in reading order (left before right, top before bottom). A heading printed above only one of them becomes that table's first header row, spanning all its columns.

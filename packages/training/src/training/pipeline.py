@@ -174,7 +174,8 @@ class Pipeline:
             kept: list[Row] = []
             why: Counter[str] = Counter()
             for label in labels:
-                if reason := rejection(label, max_tokens=MAX_SELF_LABEL_TOKENS):
+                benchmark_label = self.manifest[label["region_id"]]["label"]
+                if reason := rejection(label, max_tokens=MAX_SELF_LABEL_TOKENS, benchmark_label=benchmark_label):
                     why[reason] += 1
                 else:
                     kept.append(label)
@@ -212,14 +213,16 @@ class Pipeline:
                 continue
             predictions = self.transcribe(stage, rows, self.dir / f"eval_{stage}.jsonl")
             scores: dict[str, list[float]] = defaultdict(list)
+            by_series: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
             outcomes: Counter[str] = Counter()
             for label in predictions:
                 result = reinterpret(label) if label["response"] is not None else None
                 predicted = crop_tables(result) if result is not None else None
                 score = crop_score(references[label["region_id"]], predicted)
-                medium = self.manifest[label["region_id"]]["medium"]
-                for group in ("all", medium):
+                row = self.manifest[label["region_id"]]
+                for group in ("all", row["medium"]):
                     scores[group].append(score)
+                    by_series[group][row["source_id"]].append(score)
                 outcomes[label["status"]] += 1
                 for table in label["tables"]:
                     outcomes[f"table {table['outcome']}"] += 1
@@ -227,6 +230,12 @@ class Pipeline:
                 "parts": len(predictions),
                 "outcomes": dict(outcomes),
                 "records": {group: round(mean(values), 4) for group, values in sorted(scores.items())},
+                # every series weighs the same, so one large series cannot decide a group's score
+                "records_series_mean": {
+                    group: round(mean(mean(v) for v in series.values()), 4)
+                    for group, series in sorted(by_series.items())
+                },
+                "series": {group: len(series) for group, series in sorted(by_series.items())},
             }
             self.log(f"eval {stage}: {json.dumps(report[stage])}")
         (self.dir / "eval.json").write_text(json.dumps(report, indent=2))
