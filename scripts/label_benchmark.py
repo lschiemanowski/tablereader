@@ -12,6 +12,9 @@ Second batch, for r2 (user decision, 2026-11-11; `--scope r2`): every training p
 `not_a_table` or `wrongly_cropped` (the first batch had only `table` parts, so the model never learned
 NOT_A_TABLE), and `--tables` more `table` parts, half scanned and half digital, drawn round-robin over series so
 each series contributes about equally.
+
+Third batch, for r3 (user decision, 2026-11-12; `--scope r3 --tables 1587`): the same draw over the parts still
+unlabeled, bringing Terra training parts to 5,000. Each batch keeps its draw in `<out>/<scope>-selection.jsonl`.
 """
 
 import argparse
@@ -75,7 +78,7 @@ def select(rows: list[dict[str, Any]], benchmark: Path, pilot: int | None, seed:
     return sample[:pilot]
 
 
-def select_r2(rows: list[dict[str, Any]], done: set[str], tables: int, seed: int) -> list[dict[str, Any]]:
+def select_batch(rows: list[dict[str, Any]], done: set[str], tables: int, seed: int) -> list[dict[str, Any]]:
     pool = [r for r in rows if r["split"] == "train" and Path(r["image"]).stem not in done]
     chosen = [r for r in pool if r["label"] in ("not_a_table", "wrongly_cropped")]
     rng = random.Random(seed)
@@ -104,10 +107,10 @@ async def run(args: argparse.Namespace) -> None:
     args.out.mkdir(parents=True, exist_ok=True)
     results_path = args.out / "results.jsonl"
     done = {json.loads(line)["region_id"] for line in results_path.open()} if results_path.exists() else set[str]()
-    if args.scope == "r2":
-        selection = args.out / "r2-selection.jsonl"
+    if args.scope != "first":
+        selection = args.out / f"{args.scope}-selection.jsonl"
         if not selection.exists():  # fixed once drawn, so a rerun resumes the same parts
-            picked = select_r2(rows, done, args.tables, args.seed)
+            picked = select_batch(rows, done, args.tables, args.seed)
             selection.write_text("".join(json.dumps({"region_id": Path(r["image"]).stem}) + "\n" for r in picked))
         wanted = {json.loads(line)["region_id"] for line in selection.open()}
         todo = [r for r in rows if Path(r["image"]).stem in wanted]
@@ -168,8 +171,8 @@ def main() -> None:
     parser.add_argument("--recrops", type=Path, default=Path("data/recrops"))
     parser.add_argument("--out", type=Path, default=Path("data/labels/terra"))
     parser.add_argument("--pilot", type=int, help="label a stratified sample of this size instead of the full scope")
-    parser.add_argument("--scope", choices=["first", "r2"], default="first", help="which batch to label")
-    parser.add_argument("--tables", type=int, default=1500, help="r2: table parts to add")
+    parser.add_argument("--scope", choices=["first", "r2", "r3"], default="first", help="which batch to label")
+    parser.add_argument("--tables", type=int, default=1500, help="r2, r3: table parts to add")
     parser.add_argument("--seed", type=int, default=20261108)
     parser.add_argument("--max-in-flight", type=int, default=6)
     parser.add_argument("--cli", type=Path, default=DEFAULT_CLI)
