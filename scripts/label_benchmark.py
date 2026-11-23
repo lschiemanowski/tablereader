@@ -107,7 +107,10 @@ async def run(args: argparse.Namespace) -> None:
     args.out.mkdir(parents=True, exist_ok=True)
     results_path = args.out / "results.jsonl"
     done = {json.loads(line)["region_id"] for line in results_path.open()} if results_path.exists() else set[str]()
-    if args.scope != "first":
+    if args.selection is not None:  # exactly these parts, e.g. a second reading of labeled parts into another --out
+        wanted = {json.loads(line)["region_id"] for line in args.selection.open()}
+        todo = [r for r in rows if Path(r["image"]).stem in wanted]
+    elif args.scope != "first":
         selection = args.out / f"{args.scope}-selection.jsonl"
         if not selection.exists():  # fixed once drawn, so a rerun resumes the same parts
             picked = select_batch(rows, done, args.tables, args.seed)
@@ -172,6 +175,7 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=Path("data/labels/terra"))
     parser.add_argument("--pilot", type=int, help="label a stratified sample of this size instead of the full scope")
     parser.add_argument("--scope", choices=["first", "r2", "r3"], default="first", help="which batch to label")
+    parser.add_argument("--selection", type=Path, help="label the parts listed in this jsonl ({region_id}) instead")
     parser.add_argument("--tables", type=int, default=1500, help="r2, r3: table parts to add")
     parser.add_argument("--seed", type=int, default=20261108)
     parser.add_argument("--max-in-flight", type=int, default=6)
