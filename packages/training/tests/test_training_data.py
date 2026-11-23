@@ -1,6 +1,7 @@
 """Label acceptance, training targets, recrop loading and the evaluation's crop tables, without a GPU."""
 
 import json
+import re
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any
@@ -12,7 +13,7 @@ from document_prep.models import PreparationSettings
 from evaluation.records import NOT_A_TABLE, crop_score
 from extraction.extract import interpret
 from extraction.results import FinishReason, OcrResult, encode_region_result
-from training.data import Recrops, reinterpret, rejection, training_target
+from training.data import Recrops, lora_targets, reinterpret, rejection, training_target
 from training.pipeline import crop_tables
 
 TABLE = '# Receipts\n<table>\n  <tbody>\n    <tr><td data-level="0">Taxes</td><td>100</td></tr>\n  </tbody>\n</table>'
@@ -93,3 +94,21 @@ def test_recrops_rebuild_prepared_regions(tmp_path: Path) -> None:
     assert recrops.settings == PreparationSettings()
     (region,) = recrops.regions(recrops.rows)
     assert (region.region.region_id, region.image.size, region.renderer) == ("abc-0", (40, 20), "pdfium test")
+
+
+@pytest.mark.parametrize(
+    ("name", "language", "vision"),
+    [
+        ("model.language_model.layers.3.self_attn.q_proj", True, True),
+        ("model.language_model.layers.0.linear_attn.in_proj_qkv", True, True),
+        ("model.visual.blocks.11.attn.qkv", False, True),
+        ("model.visual.blocks.0.mlp.linear_fc2", False, True),
+        ("model.visual.merger.linear_fc1", False, True),
+        ("model.visual.patch_embed.proj", False, False),
+        ("model.visual.blocks.0.norm1", False, False),
+        ("lm_head", False, False),
+    ],
+)
+def test_lora_adapts_the_vision_encoder_only_when_asked(name: str, language: bool, vision: bool) -> None:
+    assert bool(re.fullmatch(lora_targets(), name)) is language
+    assert bool(re.fullmatch(lora_targets(vision=True), name)) is vision

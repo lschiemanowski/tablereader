@@ -12,6 +12,7 @@ dependencies = ["table-core", "document-prep", "extraction", "evaluation"]
 # trained models, is a separate install (`uv tool install vllm`). Installed with `uv sync --group train`.
 gpu = [
     "accelerate==1.15.0",
+    "bitsandbytes==0.50.2",  # 4-bit base weights for reviewer fine-tuning (training.review_sft --load-4bit)
     "flash-linear-attention==0.6.0",
     "peft==0.21.2",
     "torch==2.15.0",
