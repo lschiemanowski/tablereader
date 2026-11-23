@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent))
-from benchmark_regions import Page, load_pages
+from benchmark_regions import SOURCES, Page, load_pages
 
 from document_prep.models import Box, DocumentSource, LayoutRegion, PreparationSettings
 from document_prep.prepare import prepare_page
@@ -96,9 +96,10 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--ids", type=Path, help="only parts whose region_id or table_id is listed in this file")
     parser.add_argument("--layout", type=Path, default=Path("data/layout"), help="output of benchmark_layout.py")
+    parser.add_argument("--source", choices=SOURCES, default="v1", help="v1 release or the scan expansion")
     args = parser.parse_args()
     settings = PreparationSettings()
-    pages = load_pages(args.benchmark)
+    pages = load_pages(args.benchmark, args.source)
     if args.ids:
         wanted = set(args.ids.read_text().split())
 
@@ -125,10 +126,9 @@ def main() -> None:
     with ProcessPoolExecutor(args.workers) as pool:
         for page_rows in pool.map(recrop_page, jobs, chunksize=4):
             rows.extend(page_rows)
-    order = {
-        (json.loads(line)["crop_key"]): i
-        for i, line in enumerate((args.benchmark / "data/full/release-v1/examples.jsonl").open())
-    }
+    listing = "release-v1/examples.jsonl" if args.source == "v1" else "scan-expansion/selected.jsonl"
+    lines = (args.benchmark / "data/full" / listing).open()
+    order = {json.loads(line)["crop_key"]: i for i, line in enumerate(lines)}
     rows.sort(key=lambda r: (order[r["crop_key"]], r["part"]))
     from document_prep.prepare import RENDERER
 
