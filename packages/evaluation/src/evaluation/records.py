@@ -1,14 +1,17 @@
 """The record metric (planning/architecture.md, "Evaluation"), computed from table JSON.
 
-A record is one nonempty value cell as `(row path, column path, value text)`. Row paths follow the heading rule
-(`table_core.paths`); where a missing level leaves a path unresolved, rows fall back to level 0, as ttr did, and
-the number of such rows is reported. Column paths skip blank headers. A value spanning several columns or rows
-is one record, at its starting row and first column. Labels are normalized (`normalize_label`); values are
-compared as transcribed, markers already removed. A crop's score is |reference ∩ prediction| / |union| over the
-records of all its tables; a crop both sides call NOT_A_TABLE scores 1, a disagreement 0, and a failed
-prediction 0.
+A record is one nonempty value cell as `(row path, column heading, value text)`. Row paths follow the heading
+rule (`table_core.paths`); where a missing level leaves a path unresolved, rows fall back to level 0, as ttr did,
+and the number of such rows is reported. A column's heading is its path joined into one string, blank headers
+skipped, so a heading printed on two lines scores the same whether it is read as one cell (`2024 £000`) or as
+two header rows (`2024` over `£000`). A value spanning several columns or rows is one record, at its starting
+row and first column. Labels are normalized (`normalize_label`); values are compared as transcribed, markers
+already removed, except that the dash glyphs are one character (`normalize_value`). A crop's score is
+|reference ∩ prediction| / |union| over the records of all its tables; a crop both sides call NOT_A_TABLE
+scores 1, a disagreement 0, and a failed prediction 0.
 
-Metric version `records-1`. Change the version with any change to normalization or record construction.
+Metric version `records-2` (records-1 kept column paths as tuples, distinguished dash glyphs in values and
+kept trailing `:-` on labels). Change the version with any change to normalization or record construction.
 """
 
 import re
@@ -19,9 +22,9 @@ from dataclasses import dataclass, replace
 from table_core.models import Row, Table
 from table_core.paths import column_paths, row_paths
 
-RECORDS_VERSION = "records-1"
+RECORDS_VERSION = "records-2"
 
-Record = tuple[tuple[str, ...], tuple[str, ...], str]
+Record = tuple[tuple[str, ...], str, str]
 
 
 class NotATable:
@@ -35,6 +38,11 @@ NOT_A_TABLE = NotATable()
 CropTables = Sequence[Table] | NotATable | None  # None: extraction failed
 
 
+DASHES = re.compile(
+    "[\N{HYPHEN}\N{NON-BREAKING HYPHEN}\N{FIGURE DASH}\N{EN DASH}\N{EM DASH}\N{HORIZONTAL BAR}\N{MINUS SIGN}]"
+)
+
+
 def normalize_label(text: str) -> str:
     """Row and column labels for matching: dot leaders, dashes, fractions, trailing punctuation, case, spacing.
 
@@ -42,10 +50,15 @@ def normalize_label(text: str) -> str:
     """
     s = unicodedata.normalize("NFC", text)
     s = re.sub(r"\.{2,}|…", " ", s)
-    s = re.sub("[\N{EN DASH}\N{EM DASH}]", "-", s).replace("½", " 1/2").replace("¼", " 1/4").replace("¾", " 3/4")
-    s = re.sub(r"[.:,]+(\s|$)", r"\1", s).strip()
+    s = DASHES.sub("-", s).replace("½", " 1/2").replace("¼", " 1/4").replace("¾", " 3/4")
+    s = re.sub(r"[.:,]+-*(\s|$)", r"\1", s).strip()
     s = re.sub(r"\s*-\s*", "-", s)
     return " ".join(s.casefold().split())
+
+
+def normalize_value(text: str) -> str:
+    """Values for matching: every dash glyph is `-` (nil dashes are indistinguishable in print); nothing else."""
+    return DASHES.sub("-", text)
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,8 +83,8 @@ def table_records(table: Table) -> TableRecords:
             first = column_index.get(cell.columns[0])
             if first is None or first < first_value_column or not cell.text:
                 continue
-            column = tuple(normalize_label(t) for t in paths[cell.columns[0]])
-            records.append((labels, column, cell.text))
+            column = normalize_label(" ".join(paths[cell.columns[0]]))
+            records.append((labels, column, normalize_value(cell.text)))
     unique = frozenset(records)
     return TableRecords(records=unique, level_fallback_rows=fallback_rows, duplicates=len(records) - len(unique))
 

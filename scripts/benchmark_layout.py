@@ -16,7 +16,7 @@ from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from benchmark_regions import load_pages
+from benchmark_regions import SOURCES, load_pages
 from PIL import Image
 
 from document_prep.models import DocumentSource, PreparationSettings
@@ -34,6 +34,7 @@ def main() -> None:
     parser.add_argument("benchmark", type=Path)
     parser.add_argument("--out", type=Path, default=Path("data/layout"))
     parser.add_argument("--workers", type=int, default=16)
+    parser.add_argument("--source", choices=SOURCES, default="v1", help="v1 release or the scan expansion")
     parser.add_argument("--chunk", type=int, default=256, help="pages rendered per GPU round")
     args = parser.parse_args()
     os.environ.setdefault("HF_HUB_OFFLINE", "1")
@@ -41,7 +42,7 @@ def main() -> None:
 
     settings = PreparationSettings()
     detector = HeronLayoutDetector(threshold=0.3)
-    pages = load_pages(args.benchmark)
+    pages = load_pages(args.benchmark, args.source)
     scale = 72 / settings.layout_dpi
     found: dict[str, dict[int, list[dict[str, object]]]] = defaultdict(dict)
     with ProcessPoolExecutor(args.workers) as pool:

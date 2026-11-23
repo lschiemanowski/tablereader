@@ -5,10 +5,15 @@ description = "Score table JSON against references: the record metric, and grid 
 license = "Apache-2.0"
 authors = [{ name = "Lothar Schiemanowski" }]
 requires-python = ">=3.12,<3.13"
-dependencies = ["table-core"]
+dependencies = [
+    "extraction",
+    "httpx>=0.28.1",
+    "table-core",
+]
 
 [tool.uv.sources]
 table-core = { workspace = true }
+extraction = { workspace = true }
 
 [build-system]
 requires = ["uv_build>=0.12.3,<0.13.0"]

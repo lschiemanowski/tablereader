@@ -4,14 +4,18 @@
 
 Stages, each writing into the run directory and skipped when its output exists:
 
-- teacher: LightOnOCR-3-4B, 3 epochs on the accepted Terra labels of the training split.
+- teacher: LightOnOCR-3-4B, 3 epochs (`--teacher-epochs`) on the accepted Terra labels of the training split.
 - label1: the teacher transcribes every training part without a Terra label (~8,000).
 - student1: from the base model, 1 epoch on the accepted self-labels plus the Terra training labels three times.
 - polish: from the student, 1 epoch on the Terra training labels at half the learning rate.
 - eval: every trained model on the validation parts, scored with the record metric against accepted Terra labels.
+  `--eval-split test` scores the test parts instead (into `test_<stage>.jsonl` and `test.json`), once per release
+  candidate; `--eval-stages` limits which trained models are scored. `--eval-name` names the output files when
+  `--recrops` and `--terra` point at another evaluation set (the scan expansion: `scans-validation`).
 
 Training runs `training.sft` in a child process; labeling and evaluation serve each merged model with vLLM and
-run the production extraction path (`extract_regions` with `VllmRecognizer`). The recipe follows ttr's.
+run the production extraction path (`extract_regions` with `VllmRecognizer`). The recipe follows ttr's;
+`--rank` and `--vision` change the LoRA of every training stage (recipe runs, user decision 2026-11-12).
 """
 
 import argparse
@@ -119,6 +123,9 @@ class Pipeline:
             sys.executable, "-m", "training.sft", "--examples", str(path), "--base", str(base),
             "--out", str(self.dir / stage), "--epochs", str(epochs), "--lr", str(lr), "--seed", str(self.args.seed),
         ]  # fmt: skip
+        command += ["--rank", str(self.args.rank)]
+        if self.args.vision:
+            command.append("--vision")
         if self.args.max_steps:
             command += ["--max-steps", str(self.args.max_steps)]
         self.log(f"{stage}: training on {len(examples)} examples: {' '.join(command)}")
@@ -166,7 +173,7 @@ class Pipeline:
         self.log(f"== {name}")
         lr = self.args.lr
         if name == "teacher":
-            self.train("teacher", self.terra_train, base=BASE, epochs=3, lr=lr)
+            self.train("teacher", self.terra_train, base=BASE, epochs=self.args.teacher_epochs, lr=lr)
         elif name == "label1":
             self.transcribe("teacher", self.pool, self.dir / "label1.jsonl")
         elif name == "student1":
@@ -174,7 +181,8 @@ class Pipeline:
             kept: list[Row] = []
             why: Counter[str] = Counter()
             for label in labels:
-                if reason := rejection(label, max_tokens=MAX_SELF_LABEL_TOKENS):
+                benchmark_label = self.manifest[label["region_id"]]["label"]
+                if reason := rejection(label, max_tokens=MAX_SELF_LABEL_TOKENS, benchmark_label=benchmark_label):
                     why[reason] += 1
                 else:
                     kept.append(label)
@@ -191,35 +199,35 @@ class Pipeline:
         self.log(f"== {name} done in {(time.monotonic() - started) / 60:.0f} min")
 
     def evaluate(self) -> None:
-        # read now, not at start: validation labeling may still have been running when the pipeline began
-        validation, rejected = self.accepted(
-            read_jsonl(self.args.terra / "results.jsonl", partial_tail=True), "validation"
-        )
+        # read now, not at start: labeling may still have been running when the pipeline began
+        split = self.args.eval_split
+        prefix = self.args.eval_name or ("eval" if split == "validation" else split)
+        labels, rejected = self.accepted(read_jsonl(self.args.terra / "results.jsonl", partial_tail=True), split)
         if self.args.limit_eval:
-            validation = validation[: self.args.limit_eval]
-        expected = sum(r["split"] == "validation" for r in self.recrops.rows)
-        self.log(
-            f"eval: {len(validation)} accepted Terra validation labels of {expected} parts; rejected {dict(rejected)}"
-        )
-        rows = [self.manifest[label["region_id"]] for label in validation]
-        references = {label["region_id"]: crop_tables(reinterpret(label)) for label in validation}
+            labels = labels[: self.args.limit_eval]
+        expected = sum(r["split"] == split for r in self.recrops.rows)
+        self.log(f"eval: {len(labels)} accepted Terra {split} labels of {expected} parts; rejected {dict(rejected)}")
+        rows = [self.manifest[label["region_id"]] for label in labels]
+        references = {label["region_id"]: crop_tables(reinterpret(label)) for label in labels}
         report: dict[str, Any] = {
-            "metric": RECORDS_VERSION, "reference": "accepted Terra validation labels", "parts": len(validation),
-            "rejected_references": dict(rejected), "validation_parts": expected,
+            "metric": RECORDS_VERSION, "reference": f"accepted Terra {split} labels", "parts": len(labels),
+            "rejected_references": dict(rejected), f"{split}_parts": expected,
         }  # fmt: skip
-        for stage in TRAINED:
+        for stage in self.args.eval_stages:
             if not self.model(stage).exists():
                 continue
-            predictions = self.transcribe(stage, rows, self.dir / f"eval_{stage}.jsonl")
+            predictions = self.transcribe(stage, rows, self.dir / f"{prefix}_{stage}.jsonl")
             scores: dict[str, list[float]] = defaultdict(list)
+            by_series: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
             outcomes: Counter[str] = Counter()
             for label in predictions:
                 result = reinterpret(label) if label["response"] is not None else None
                 predicted = crop_tables(result) if result is not None else None
                 score = crop_score(references[label["region_id"]], predicted)
-                medium = self.manifest[label["region_id"]]["medium"]
-                for group in ("all", medium):
+                row = self.manifest[label["region_id"]]
+                for group in ("all", row["medium"]):
                     scores[group].append(score)
+                    by_series[group][row["source_id"]].append(score)
                 outcomes[label["status"]] += 1
                 for table in label["tables"]:
                     outcomes[f"table {table['outcome']}"] += 1
@@ -227,9 +235,15 @@ class Pipeline:
                 "parts": len(predictions),
                 "outcomes": dict(outcomes),
                 "records": {group: round(mean(values), 4) for group, values in sorted(scores.items())},
+                # every series weighs the same, so one large series cannot decide a group's score
+                "records_series_mean": {
+                    group: round(mean(mean(v) for v in series.values()), 4)
+                    for group, series in sorted(by_series.items())
+                },
+                "series": {group: len(series) for group, series in sorted(by_series.items())},
             }
-            self.log(f"eval {stage}: {json.dumps(report[stage])}")
-        (self.dir / "eval.json").write_text(json.dumps(report, indent=2))
+            self.log(f"{prefix} {stage}: {json.dumps(report[stage])}")
+        (self.dir / f"{prefix}.json").write_text(json.dumps(report, indent=2))
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -240,6 +254,12 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser.add_argument("--only", nargs="+", choices=STAGES, help="run only these stages")
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--teacher-epochs", type=int, default=3)
+    parser.add_argument("--rank", type=int, default=16, help="LoRA rank of every training stage")
+    parser.add_argument("--vision", action="store_true", help="also adapt the vision encoder in every stage")
+    parser.add_argument("--eval-split", choices=["validation", "test"], default="validation")
+    parser.add_argument("--eval-name", help="output name for the scores (default: eval, or test for test)")
+    parser.add_argument("--eval-stages", nargs="+", choices=TRAINED, default=list(TRAINED))
     parser.add_argument("--max-in-flight", type=int, default=64)
     parser.add_argument("--limit-train", type=int, help="smoke tests: at most N Terra training labels")
     parser.add_argument("--limit-label", type=int, help="smoke tests: at most N pool parts")

@@ -22,6 +22,21 @@ from extraction.results import FinishReason, OcrResult, RegionResult
 BASE = "lightonai/LightOnOCR-3-4B"  # the model fine-tuning starts from
 MAX_SELF_LABEL_TOKENS = 10000
 
+# LoRA covers every projection of the language model, the linear-attention ones included; with `vision`, also the
+# vision encoder's blocks and the merger that projects its patches into the language model (not the patch
+# embedding, a convolution). PEFT matches a string target against each full module name.
+LANGUAGE_TARGETS = (
+    r".*language_model.*\.(q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj"
+    r"|in_proj_qkv|in_proj_z|in_proj_a|in_proj_b|out_proj)"
+)
+VISION_TARGETS = r".*visual\.(blocks\.\d+\.(attn\.(qkv|proj)|mlp\.linear_fc[12])|merger\.linear_fc[12])"
+
+
+def lora_targets(*, vision: bool = False) -> str:
+    """The modules LoRA adapts, as a regular expression over module names."""
+    return f"({LANGUAGE_TARGETS})|({VISION_TARGETS})" if vision else LANGUAGE_TARGETS
+
+
 Row = dict[str, Any]
 
 
@@ -103,8 +118,14 @@ def _box(values: list[float]) -> Box:
     return Box(left=values[0], top=values[1], right=values[2], bottom=values[3])
 
 
-def rejection(label: Mapping[str, Any], *, max_tokens: int | None = None) -> str | None:
-    """Why `label` is unfit as a training target, or None if it is accepted."""
+def rejection(
+    label: Mapping[str, Any], *, max_tokens: int | None = None, benchmark_label: str | None = None
+) -> str | None:
+    """Why `label` is unfit as a training target, or None if it is accepted.
+
+    With `benchmark_label` (self-labels), a part table_benchmark marks `not_a_table` is kept only as NOT_A_TABLE:
+    r1's teacher transcribed all 656 such parts as tables, and training on them taught the opposite.
+    """
     if label["status"] == "failed":
         return "failed"
     response: Mapping[str, Any] = label.get("response") or {}
@@ -119,6 +140,8 @@ def rejection(label: Mapping[str, Any], *, max_tokens: int | None = None) -> str
             return "not ready"
     if max_tokens is not None and usage.get("completion_tokens", 0) > max_tokens:
         return "too long"
+    if benchmark_label == "not_a_table" and label["status"] != "not_a_table":
+        return "benchmark says not a table"
     return None
 
 

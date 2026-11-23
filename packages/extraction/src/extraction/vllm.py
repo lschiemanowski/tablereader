@@ -9,6 +9,7 @@ pixels. vLLM is a separate install (`uv tool install vllm`, or `$VLLM` pointing 
 import base64
 import io
 import os
+import shutil
 import signal
 import subprocess
 import time
@@ -110,6 +111,28 @@ class VllmRecognizer:
         await self._client.aclose()
 
 
+def gpu_free_fraction() -> float | None:
+    """The free share of GPU 0's memory per nvidia-smi, or None where nvidia-smi is unavailable."""
+    if shutil.which("nvidia-smi") is None:
+        return None
+    query = ["nvidia-smi", "--id=0", "--query-gpu=memory.free,memory.total", "--format=csv,noheader,nounits"]
+    try:
+        free, total = (
+            float(v) for v in subprocess.run(query, capture_output=True, text=True, check=True).stdout.split(",")
+        )
+    except (subprocess.CalledProcessError, ValueError):
+        return None
+    return free / total
+
+
+def wait_for_gpu_memory(fraction: float, *, timeout: float = 300, poll: float = 5) -> None:
+    """Wait until `fraction` of GPU memory is free: a training process that just exited may still hold its memory,
+    and vLLM refuses to start below its utilization target. Returns after `timeout` and lets vLLM report it."""
+    deadline = time.monotonic() + timeout
+    while (free := gpu_free_fraction()) is not None and free < fraction and time.monotonic() < deadline:
+        time.sleep(poll)
+
+
 class VllmServer:
     """A `vllm serve` process for one model, started on enter and stopped (with its engine children) on exit."""
 
@@ -130,6 +153,7 @@ class VllmServer:
         self.log = log
         self.port = port
         self.startup_timeout = startup_timeout
+        self.gpu_memory_utilization = gpu_memory_utilization
         self.command: Sequence[str] = [
             executable or os.environ.get("VLLM", "vllm"), "serve", str(model),
             "--served-model-name", name,
@@ -149,6 +173,7 @@ class VllmServer:
 
     def __enter__(self) -> Self:
         self.log.parent.mkdir(parents=True, exist_ok=True)
+        wait_for_gpu_memory(self.gpu_memory_utilization)
         with self.log.open("w") as log:
             self._process = subprocess.Popen(self.command, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
         deadline = time.monotonic() + self.startup_timeout
